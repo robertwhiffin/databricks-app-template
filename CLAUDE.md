@@ -238,6 +238,29 @@ LLM_MAX_TOKENS=2048
 - `config/deployment.yaml`: Databricks App deployment settings (dev/staging/prod)
 - `config/deployment.example.yaml`: Template with placeholder values
 
+## Databricks Apps Reverse Proxy Timeout
+
+⚠️ **Critical for Production:** Databricks Apps has a ~60 second reverse proxy timeout. Long LLM calls will fail.
+
+### Current Implementation
+The template uses synchronous request/response. Fine for fast models, but may timeout with:
+- Large models (405B parameters)
+- Complex prompts
+- RAG with large context
+
+### Solution: Polling Pattern
+The codebase includes infrastructure for polling (see `ChatRequest` model, `session_manager.create_chat_request()`), but it's not wired up by default.
+
+To implement:
+1. Add `/api/chat/async` endpoint that returns `job_id` immediately
+2. Process in background worker
+3. Add `/api/chat/jobs/{job_id}` for status polling
+4. Update frontend to poll instead of wait
+
+See README.md for complete code example.
+
+---
+
 ## Troubleshooting
 
 ### "DATABRICKS_HOST not set"

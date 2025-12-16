@@ -225,6 +225,119 @@ Edit `src/api/static/index.html` to customize the chat interface. It's a single 
 
 ---
 
+## Databricks Apps Reverse Proxy Timeout
+
+⚠️ **Important for Production:** Databricks Apps uses a reverse proxy with a ~60 second timeout. If your LLM calls take longer than this, requests will fail even though processing continues in the background.
+
+### Current Behavior
+
+This template uses a simple synchronous request/response pattern. For most chat interactions with fast models, this works fine. However, if you're using:
+- Slower models (e.g., 405B parameter models)
+- Complex prompts with long responses
+- RAG with large context retrieval
+
+...you may hit the reverse proxy timeout.
+
+### Solution: Polling Pattern
+
+For long-running LLM calls, implement a polling pattern where:
+1. Client submits a job and gets back a `job_id` immediately
+2. Server processes the job in a background worker
+3. Client polls for status until complete
+
+Here's a minimal example:
+
+```python
+import asyncio
+import uuid
+from typing import Any, Dict
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+# In-memory store (use database in production)
+job_queue: asyncio.Queue = asyncio.Queue()
+jobs: Dict[str, Dict[str, Any]] = {}
+
+class ChatJobRequest(BaseModel):
+    message: str
+    session_id: str
+
+# Background worker processes jobs from queue
+async def worker():
+    while True:
+        job_id, payload = await job_queue.get()
+        jobs[job_id]["status"] = "running"
+        try:
+            # Your long-running LLM call here
+            result = await call_llm(payload["message"])
+            jobs[job_id]["status"] = "done"
+            jobs[job_id]["result"] = result
+        except Exception as exc:
+            jobs[job_id]["status"] = "error"
+            jobs[job_id]["error"] = str(exc)
+        finally:
+            job_queue.task_done()
+
+# Start worker on app startup
+@app.on_event("startup")
+async def startup():
+    app.state.worker_task = asyncio.create_task(worker())
+
+@app.on_event("shutdown")
+async def shutdown():
+    app.state.worker_task.cancel()
+
+# Submit job - returns immediately with job_id
+@app.post("/api/chat/async")
+async def submit_chat_job(req: ChatJobRequest):
+    job_id = uuid.uuid4().hex
+    jobs[job_id] = {"status": "pending", "result": None, "error": None}
+    await job_queue.put((job_id, req.model_dump()))
+    return {"job_id": job_id, "status": "pending"}
+
+# Poll for job status/result
+@app.get("/api/chat/jobs/{job_id}")
+async def get_job_status(job_id: str):
+    meta = jobs.get(job_id)
+    if not meta:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return {"job_id": job_id, **meta}
+```
+
+**Frontend polling:**
+
+```javascript
+async function sendMessageAsync(message, sessionId) {
+    // 1. Submit job
+    const submitRes = await fetch('/api/chat/async', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message, session_id: sessionId})
+    });
+    const {job_id} = await submitRes.json();
+    
+    // 2. Poll until complete
+    while (true) {
+        await new Promise(r => setTimeout(r, 1000)); // Wait 1 second
+        const statusRes = await fetch(`/api/chat/jobs/${job_id}`);
+        const job = await statusRes.json();
+        
+        if (job.status === 'done') {
+            return job.result;
+        } else if (job.status === 'error') {
+            throw new Error(job.error);
+        }
+        // else: still pending/running, continue polling
+    }
+}
+```
+
+**Note:** This template includes database models for job tracking (`ChatRequest` table) that you can use instead of in-memory storage. See `src/api/services/session_manager.py` for `create_chat_request()`, `update_chat_request_status()`, and `get_chat_request()` methods.
+
+---
+
 ## Development Commands
 
 ```bash
