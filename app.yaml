@@ -1,0 +1,36 @@
+# Databricks App configuration
+# This file defines the app structure for deployment to Databricks Apps
+
+name: databricks-chat-template
+description: Production-ready chat application template for Databricks
+
+# Compute configuration
+compute:
+  size: MEDIUM  # Options: MEDIUM, LARGE, LIQUID
+
+# Source files
+source_code_path: "."
+
+# Entry point
+command:
+  - "uvicorn"
+  - "src.api.main:app"
+  - "--host"
+  - "0.0.0.0"
+  - "--port"
+  - "8000"
+
+# Environment variables
+env:
+  - name: ENVIRONMENT
+    value: "production"
+  - name: PYTHONPATH
+    value: "/Workspace${workspace_path}"
+
+# Resources (optional - for Lakebase)
+# resources:
+#   - name: lakebase
+#     type: sql-warehouse
+#     warehouse_id: "${LAKEBASE_WAREHOUSE_ID}"
+
+# Permissions (configured via deployment.yaml)

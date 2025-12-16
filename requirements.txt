@@ -1,0 +1,35 @@
+# Databricks Chat App Template - Dependencies
+
+# Core web framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# Pydantic for validation
+pydantic>=2.4.0
+pydantic-settings>=2.0.0
+
+# HTTP client
+httpx>=0.25.0
+
+# Databricks SDK
+databricks-sdk>=0.20.0
+
+# Database
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+databricks-sql-connector>=3.0.0
+
+# Configuration
+python-dotenv>=1.0.0
+pyyaml>=6.0.0
+
+# Observability
+mlflow>=3.0.0
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+
+# Data handling
+pandas>=2.0.0
+
+# Utilities
+python-multipart>=0.0.6

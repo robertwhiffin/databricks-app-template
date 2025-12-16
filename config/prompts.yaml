@@ -1,0 +1,93 @@
+# ============================================================================
+# System Prompts Configuration
+# ============================================================================
+#
+# This file contains the default prompts used by the chat assistant.
+# These prompts are loaded into the database when you first run init_database.py
+#
+# ⚠️ IMPORTANT: After initial setup, changes here WON'T automatically update
+#    the running app! The database is the source of truth.
+#
+# 💡 TO UPDATE PROMPTS:
+#    Option 1: Use the Settings UI in the app (recommended)
+#    Option 2: Update database directly:
+#              UPDATE prompts SET system_prompt = '...' WHERE profile_id = 1;
+#    Option 3: Delete database and re-run init_database.py (nuclear option)
+#
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# System Prompt
+# ----------------------------------------------------------------------------
+# This defines your AI assistant's personality, behavior, and capabilities.
+# The system prompt is sent with EVERY user message to provide context.
+#
+# 🎯 WHAT TO INCLUDE:
+#    - Who the AI is (role/personality)
+#    - What it can/can't do
+#    - How it should format responses
+#    - Any domain-specific knowledge or constraints
+#
+# 💡 CUSTOMIZATION EXAMPLES:
+#
+#    Customer Support Bot:
+#      "You are a customer support agent for Acme Corp. You help with orders,
+#       returns, and product questions. Always be polite and solution-oriented."
+#
+#    Data Analyst Assistant:
+#      "You are a data analyst who writes SQL queries and explains insights.
+#       You have access to: customers, orders, products tables."
+#
+#    Code Review Assistant:
+#      "You are a senior software engineer. Review code for: security issues,
+#       performance problems, best practices violations."
+#
+# ⚠️ BEST PRACTICES:
+#    - Be specific about the role and capabilities
+#    - Include formatting instructions (markdown, code blocks, etc.)
+#    - Keep it concise (100-300 words typically)
+#    - Test changes with various user questions
+#
+# 📏 LENGTH: Most models work best with 100-500 words
+#            Too short = generic responses
+#            Too long = may get ignored or truncated
+#
+system_prompt: |
+  You are a helpful AI assistant powered by Databricks. You provide clear, accurate,
+  and concise responses to user questions.
+
+  Format your responses using markdown for better readability:
+  - Use **bold** for emphasis
+  - Use bullet points for lists
+  - Use code blocks with syntax highlighting for code snippets
+  - Use headings to organize longer responses
+
+  Be friendly, professional, and helpful. If you don't know something, admit it
+  rather than making up information.
+
+# ----------------------------------------------------------------------------
+# User Prompt Template
+# ----------------------------------------------------------------------------
+# This template wraps each user message before sending to the model.
+# Use {question} as a placeholder for the actual user input.
+#
+# 💡 USE CASES:
+#
+#    Add Context:
+#      "Context: We are a financial services company.\nQuestion: {question}"
+#
+#    Add Instructions:
+#      "Answer the following question concisely:\n{question}"
+#
+#    Add Constraints:
+#      "Question: {question}\nProvide answer in 3 bullet points or less."
+#
+# ⚠️ IMPORTANT:
+#    - Must include {question} placeholder (will be replaced with user input)
+#    - Keep it simple for most use cases - just "{question}" works fine
+#    - Complex templates can confuse the model
+#
+# 🎯 DEFAULT: "{question}" - Simple passthrough (recommended for most cases)
+#
+user_prompt_template: |
+  {question}

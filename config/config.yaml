@@ -1,0 +1,313 @@
+# ============================================================================
+# Default Configuration for Databricks Chat Template
+# ============================================================================
+#
+# This file contains default configuration values used when creating new profiles.
+# These settings are loaded by src/core/defaults.py as fallback values.
+#
+# ⚠️ IMPORTANT: For production deployments, use seed_profiles.yaml instead!
+#    This file is mainly for development and testing.
+#
+# 💡 WHEN THIS FILE IS USED:
+#    - Fallback values if database settings are missing
+#    - Development/testing without database setup
+#    - Default values for new profile creation
+#
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# LLM (Large Language Model) Configuration
+# ----------------------------------------------------------------------------
+# Settings for the model serving endpoint and generation parameters
+#
+llm:
+  endpoint_name: "databricks-claude-sonnet-4-5"
+  # 🎯 Model Serving Endpoint Name
+  #
+  # This is the name of your Databricks model serving endpoint.
+  # Must match EXACTLY the endpoint name in your Databricks workspace.
+  #
+  # 📍 WHERE TO FIND IT:
+  #    Databricks UI > Serving > Serving Endpoints
+  #
+  # ✅ DATABRICKS FOUNDATION MODELS (ready to use):
+  #    - databricks-meta-llama-3-1-70b-instruct (recommended - balanced)
+  #    - databricks-meta-llama-3-1-405b-instruct (powerful but slower)
+  #    - databricks-dbrx-instruct (Databricks' own model)
+  #    - databricks-mixtral-8x7b-instruct (fast, good for simple tasks)
+  #
+  # 💡 CUSTOM ENDPOINTS:
+  #    Replace with your custom endpoint name:
+  #    endpoint_name: "my-custom-model-v2"
+  #
+  # ⚠️ IMPORTANT:
+  #    - Endpoint must be in "Ready" state (not Stopped)
+  #    - You need permissions to query the endpoint
+  #    - Test the endpoint in Databricks UI first
+  #
+  # 🔗 DOCS: https://docs.databricks.com/machine-learning/model-serving/
+
+  temperature: 0.7
+  # 🌡️ Temperature: Controls randomness in model responses (0.0 - 1.0)
+  #
+  # 💡 HOW TO CHOOSE:
+  #    Lower (0.0-0.3):
+  #      - More deterministic and focused
+  #      - Best for: factual Q&A, data extraction, classification
+  #      - Example: "What is the capital of France?" → Always "Paris"
+  #
+  #    Medium (0.4-0.7):
+  #      - Balanced creativity and consistency
+  #      - Best for: general chat, customer support, explanations
+  #      - Example: Friendly but predictable responses
+  #      - ✅ RECOMMENDED DEFAULT
+  #
+  #    Higher (0.8-1.0):
+  #      - More creative and varied
+  #      - Best for: brainstorming, creative writing, ideation
+  #      - Example: Multiple ways to phrase the same answer
+  #
+  # ⚠️ WARNING:
+  #    - 0.0 = Boring, repetitive (but predictable)
+  #    - 1.0 = Creative but can be random or nonsensical
+  #
+  # 🎯 START WITH: 0.7 and adjust based on your use case
+
+  max_tokens: 2048
+  # 📏 Max Tokens: Maximum length of model response
+  #
+  # 💡 TOKEN GUIDE (approximate for English):
+  #    - 1 token ≈ 0.75 words
+  #    - 100 tokens ≈ 75 words ≈ 1-2 short paragraphs
+  #    - 500 tokens ≈ 375 words ≈ 1 page (single-spaced)
+  #    - 1024 tokens ≈ 750 words ≈ 2 pages
+  #    - 2048 tokens ≈ 1500 words ≈ 3-4 pages
+  #    - 4096 tokens ≈ 3000 words ≈ 6-8 pages
+  #
+  # 🎯 RECOMMENDED VALUES:
+  #    - 256-512: Very short answers (1 paragraph)
+  #    - 512-1024: Short answers (2-3 paragraphs)
+  #    - 1024-2048: Standard answers (1-2 pages) ✅ RECOMMENDED
+  #    - 2048-4096: Long answers (multiple pages)
+  #
+  # ⚠️ IMPORTANT:
+  #    - Response will be CUT OFF if it hits this limit
+  #    - Higher values = SLOWER responses and HIGHER cost
+  #    - Check your model's max token limit (usually 2048-8192)
+  #    - Set lower for faster, cheaper responses
+  #    - Set higher for detailed, long-form content
+  #
+  # 💡 TIP: Start with 2048. If responses often get cut off, increase it.
+
+  top_p: 0.95
+  # 🎲 Top-P (Nucleus Sampling): Controls diversity of word choices (0.0 - 1.0)
+  #
+  # 💡 WHAT IT DOES:
+  #    Model considers only the most probable words that add up to top_p probability.
+  #
+  #    Examples:
+  #    - top_p: 0.1 = Only top 10% most likely words (very focused)
+  #    - top_p: 0.5 = Top 50% most likely words (balanced)
+  #    - top_p: 0.95 = Top 95% of likely words (diverse) ✅ RECOMMENDED
+  #    - top_p: 1.0 = All possible words (maximum diversity)
+  #
+  # 🎯 HOW TO CHOOSE:
+  #    - 0.1-0.5: Very focused, predictable (technical docs, factual answers)
+  #    - 0.7-0.9: Balanced (general purpose)
+  #    - 0.9-1.0: More diverse and creative (brainstorming, creative writing)
+  #
+  # ⚠️ INTERACTION WITH TEMPERATURE:
+  #    - Temperature and top_p work together
+  #    - Typically set ONE or the OTHER, not both aggressively
+  #    - Common: temperature=0.7, top_p=0.95 (works for most cases)
+  #
+  # 💡 DEFAULT: 0.95 works well for most applications
+
+  timeout: 120
+  # ⏱️ Timeout: Maximum seconds to wait for model response
+  #
+  # 💡 WHAT HAPPENS:
+  #    - If model doesn't respond within this time, request fails
+  #    - User sees an error message
+  #
+  # 🎯 RECOMMENDED VALUES:
+  #    - 30-60 seconds: Simple queries, fast models
+  #    - 60-120 seconds: Standard (recommended for most cases) ✅
+  #    - 120-300 seconds: Complex queries, large models
+  #
+  # ⚠️ CONSIDER:
+  #    - Larger models (405B) are slower than smaller ones (70B)
+  #    - Higher max_tokens = longer generation time
+  #    - Cold starts can take 10-30 seconds
+  #    - User experience: 30s feels responsive, 120s feels slow
+  #
+  # 💡 TIP: Start with 120 seconds. Decrease if responses are always fast.
+
+# ----------------------------------------------------------------------------
+# MLflow Configuration
+# ----------------------------------------------------------------------------
+# Settings for experiment tracking and model observability
+#
+mlflow:
+  experiment_name: "/Users/{username}/chat-template-experiments"
+  # 📊 MLflow Experiment Name
+  #
+  # This is where all traces and metrics are logged.
+  #
+  # 💡 WHAT GETS LOGGED:
+  #    - Every chat request and response
+  #    - Model parameters (temperature, max_tokens, etc.)
+  #    - Response times and token counts
+  #    - Errors and exceptions
+  #
+  # 📍 WHERE TO VIEW:
+  #    Databricks UI > Machine Learning > Experiments > [experiment_name]
+  #
+  # 🎯 NAMING CONVENTIONS:
+  #    Development (personal):
+  #      "/Users/{username}/my-app-dev"
+  #
+  #    Staging (team):
+  #      "/Shared/my-app-staging"
+  #
+  #    Production (team):
+  #      "/Shared/my-app-prod"
+  #
+  # ⚠️ IMPORTANT:
+  #    - {username} is automatically replaced with actual username
+  #    - Experiment is auto-created if it doesn't exist
+  #    - Use /Shared/ for team-wide access
+  #    - Use /Users/ for personal development
+  #
+  # 💡 TIP: Use different experiments for dev/staging/prod environments
+
+  enabled: true
+  # 🔍 Enable MLflow Tracing
+  #
+  # 💡 WHEN TO ENABLE:
+  #    true = Log all interactions (recommended for prod) ✅
+  #    - Helps debug issues
+  #    - Track model performance
+  #    - Monitor usage patterns
+  #
+  # 💡 WHEN TO DISABLE:
+  #    false = No logging (only for very specific cases)
+  #    - High-security environments
+  #    - PII/sensitive data concerns
+  #    - Cost optimization (minimal savings)
+  #
+  # ⚠️ IMPORTANT:
+  #    Disabling means you lose visibility into:
+  #    - What users are asking
+  #    - How the model is performing
+  #    - Errors and issues
+  #
+  # 🎯 RECOMMENDATION: Keep enabled (true)
+
+# ----------------------------------------------------------------------------
+# Database Configuration
+# ----------------------------------------------------------------------------
+# Settings for session persistence and connection management
+#
+database:
+  session_ttl_hours: 24
+  # ⏳ Session Time-To-Live (TTL) in hours
+  #
+  # 💡 WHAT IT DOES:
+  #    Sessions older than this are considered "inactive" and can be cleaned up.
+  #    NOTE: This is for identifying old sessions, not automatic deletion.
+  #
+  # 🎯 RECOMMENDED VALUES:
+  #    - 1-8 hours: Short-lived, ephemeral conversations
+  #    - 24 hours: Daily conversations (recommended) ✅
+  #    - 168 hours (1 week): Long-term project discussions
+  #    - 720 hours (1 month): Persistent knowledge base
+  #
+  # 💡 USE CASES:
+  #    - 24 hours: Customer support (daily tickets)
+  #    - 168 hours: Code review (weekly sprints)
+  #    - 720 hours: Research assistant (ongoing projects)
+  #
+  # ⚠️ IMPORTANT:
+  #    - Longer TTL = more database storage used
+  #    - Users can still access sessions older than TTL
+  #    - Implement cleanup script if storage is a concern
+  #
+  # 🎯 START WITH: 24 hours for most applications
+
+  pool_size: 10
+  # 🔗 Database Connection Pool Size
+  #
+  # 💡 WHAT IT DOES:
+  #    Number of database connections kept open for reuse.
+  #    More connections = handle more concurrent requests.
+  #
+  # 🎯 SIZING GUIDE:
+  #    Small deployment (< 10 users):
+  #      pool_size: 5, max_overflow: 10
+  #
+  #    Medium deployment (10-50 users):
+  #      pool_size: 10, max_overflow: 20 ✅ RECOMMENDED
+  #
+  #    Large deployment (50-200 users):
+  #      pool_size: 20, max_overflow: 40
+  #
+  #    Very large (200+ users):
+  #      pool_size: 50, max_overflow: 100
+  #
+  # 💡 FORMULA:
+  #    pool_size ≈ (expected concurrent requests) / 2
+  #    max_overflow ≈ pool_size * 2
+  #
+  # ⚠️ WARNING:
+  #    - Too small = requests wait for available connections (slow)
+  #    - Too large = waste database resources
+  #    - PostgreSQL default max connections: 100
+  #
+  # 🎯 START WITH: 10 and monitor connection usage
+
+  max_overflow: 20
+  # 📈 Maximum Overflow Connections
+  #
+  # 💡 WHAT IT DOES:
+  #    Additional connections created when pool is full.
+  #    Total max connections = pool_size + max_overflow
+  #
+  #    Example with pool_size=10, max_overflow=20:
+  #    - Normal: 10 connections kept alive
+  #    - Burst traffic: Up to 30 total connections
+  #    - After burst: Extra 20 connections closed
+  #
+  # 🎯 RECOMMENDED:
+  #    max_overflow = pool_size * 2 (allows for 3x burst capacity)
+  #
+  # ⚠️ IMPORTANT:
+  #    - Must be less than database's max_connections limit
+  #    - PostgreSQL default: 100 connections
+  #    - Lakebase: Check your workspace limits
+  #
+  # 💡 TIP: Monitor connection usage in database logs
+
+# ============================================================================
+# Troubleshooting Common Issues
+# ============================================================================
+#
+# ❌ "Endpoint not found"
+# Solution: Check endpoint_name matches exactly in Databricks UI
+#
+# ❌ "Timeout error"
+# Solution: Increase timeout value or check if endpoint is responding
+#
+# ❌ "Too many connections"
+# Solution: Decrease pool_size + max_overflow or increase DB max_connections
+#
+# ❌ "Response cut off mid-sentence"
+# Solution: Increase max_tokens value
+#
+# ❌ "Responses are boring/repetitive"
+# Solution: Increase temperature (try 0.7-0.9)
+#
+# ❌ "Responses are too random/inconsistent"
+# Solution: Decrease temperature (try 0.3-0.5)
+#
+# ============================================================================
