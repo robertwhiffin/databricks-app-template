@@ -329,7 +329,7 @@ def load_profile(
     Load profile and reload application with new configuration.
     
     This performs a hot-reload of the application configuration from the database,
-    updating the LLM, Genie, MLflow, and prompts settings to match the specified profile.
+    updating the LLM, MLflow, and prompts settings to match the specified profile.
     Active sessions and conversation state are preserved during the reload.
     
     Args:

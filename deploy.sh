@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# AI Slide Generator - Deployment Script
+# Databricks Chat Template - Deployment Script
 # Deploys the app to Databricks Apps
 
 set -e
@@ -98,7 +98,7 @@ if [[ ! "$ENV" =~ ^(development|staging|production)$ ]]; then
     exit 1
 fi
 
-echo "🚀 AI Slide Generator Deployment"
+echo "🚀 Databricks Chat Template Deployment"
 echo ""
 
 # Check if .venv exists

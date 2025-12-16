@@ -1,6 +1,6 @@
 # Prerequisites Installation Guide
 
-Detailed guide for installing all prerequisites needed to run the AI Slide Generator.
+Detailed guide for installing all prerequisites needed to run the Databricks Chat Template.
 
 ## Overview
 
@@ -49,7 +49,7 @@ python3 --version
 ### Windows
 1. Download installer from [python.org](https://www.python.org/downloads/)
 2. Run installer
-3. ✅ Check "Add Python to PATH"
+3. Check "Add Python to PATH"
 4. Verify in PowerShell:
    ```powershell
    python --version
@@ -128,9 +128,9 @@ pg_isready
 ```bash
 # Run PostgreSQL in Docker
 docker run -d \
-  --name postgres-ai-slides \
+  --name postgres-chat-template \
   -e POSTGRES_PASSWORD=mysecretpassword \
-  -e POSTGRES_DB=databricks_chat_app \
+  -e POSTGRES_DB=chat_template \
   -p 5432:5432 \
   postgres:14
 
@@ -138,7 +138,7 @@ docker run -d \
 docker ps | grep postgres
 
 # Connection string for .env:
-# DATABASE_URL=postgresql://postgres:mysecretpassword@localhost:5432/databricks_chat_app
+# DATABASE_URL=postgresql://postgres:mysecretpassword@localhost:5432/chat_template
 ```
 
 ---
@@ -218,17 +218,16 @@ Use [nvm-windows](https://github.com/coreybutler/nvm-windows)
 - Active Databricks workspace (AWS, Azure, or GCP)
 - Admin or appropriate permissions to:
   - Create model serving endpoints
-  - Create Genie spaces
   - Generate personal access tokens
 
 ### 1. Create Personal Access Token
 
 1. **Login** to your Databricks workspace
 2. **Click** your user icon (top right)
-3. **Go to** Settings → Developer
+3. **Go to** Settings - Developer
 4. **Click** "Access Tokens" or "Manage" under Access Tokens
 5. **Click** "Generate New Token"
-6. **Set** comment (e.g., "AI Slide Generator")
+6. **Set** comment (e.g., "Databricks Chat Template")
 7. **Set** lifetime (e.g., 90 days or no lifetime)
 8. **Click** "Generate"
 9. **Copy** the token immediately (you won't see it again!)
@@ -238,7 +237,7 @@ Use [nvm-windows](https://github.com/coreybutler/nvm-windows)
 
 The application needs access to an LLM endpoint:
 
-1. **Go to** Serving → Model Serving
+1. **Go to** Serving - Model Serving
 2. **Verify** you have access to an endpoint (e.g., `databricks-claude-sonnet-4-5`)
 3. **Note** the endpoint name for configuration
 
@@ -247,17 +246,7 @@ Default endpoints in Databricks:
 - `databricks-llama-3-1-70b-instruct`
 - `databricks-mixtral-8x7b-instruct`
 
-### 3. Create/Access Genie Space
-
-Genie provides natural language SQL queries:
-
-1. **Go to** Data Intelligence → Genie
-2. **Create** or select a Genie space
-3. **Note** the Space ID:
-   - Found in URL: `...databricks.com/genie/spaces/{space-id}`
-   - Or use existing space ID
-
-### 4. Get Workspace URL
+### 3. Get Workspace URL
 
 Your workspace URL format:
 - AWS: `https://dbc-xxxxx.cloud.databricks.com`
@@ -278,36 +267,36 @@ Once everything is installed, verify:
 ### Python
 ```bash
 python3 --version
-# ✅ Python 3.10.x or higher
+# Python 3.10.x or higher
 
 python3 -m pip --version
-# ✅ pip 23.x or higher
+# pip 23.x or higher
 
 python3 -m venv --help
-# ✅ Should show venv help
+# Should show venv help
 ```
 
 ### PostgreSQL
 ```bash
 psql --version
-# ✅ psql (PostgreSQL) 14.x or higher
+# psql (PostgreSQL) 14.x or higher
 
 pg_isready
-# ✅ Shows "accepting connections"
+# Shows "accepting connections"
 
 createdb test_db
 psql -l | grep test_db
 dropdb test_db
-# ✅ Can create and drop databases
+# Can create and drop databases
 ```
 
 ### Node.js
 ```bash
 node --version
-# ✅ v18.x.x or higher
+# v18.x.x or higher
 
 npm --version
-# ✅ 9.x.x or higher
+# 9.x.x or higher
 
 npm install -g npm  # Update npm (optional)
 ```
@@ -321,8 +310,8 @@ export DATABRICKS_TOKEN="dapi...your-token"
 curl -H "Authorization: Bearer $DATABRICKS_TOKEN" \
      "$DATABRICKS_HOST/api/2.0/clusters/list"
 
-# ✅ Should return JSON (even if empty list)
-# ❌ If error, check token and URL
+# Should return JSON (even if empty list)
+# If error, check token and URL
 ```
 
 ---
@@ -354,7 +343,7 @@ pg_isready
 ```bash
 # Fix npm permissions
 mkdir ~/.npm-global
-npm settings set prefix '~/.npm-global'
+npm config set prefix '~/.npm-global'
 echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc
 source ~/.zshrc
 ```
@@ -373,10 +362,10 @@ Once all prerequisites are installed:
 1. **Continue to Quick Start:** [QUICKSTART.md](./QUICKSTART.md)
 2. **Or jump directly to setup:**
    ```bash
-   cd ai-slide-generator
+   cd databricks-chat-app
    cp .env.example .env
    # Edit .env with your credentials
-   ./quickstart/setup_database.sh
+   ./quickstart/setup.sh
    ./start_app.sh
    ```
 
@@ -397,4 +386,3 @@ Once all prerequisites are installed:
 - **pyenv:** Python version manager ([github.com/pyenv/pyenv](https://github.com/pyenv/pyenv))
 - **pipenv:** Package and venv manager
 - **poetry:** Dependency management
-

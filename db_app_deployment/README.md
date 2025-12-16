@@ -1,6 +1,6 @@
 # Databricks App Deployment
 
-CLI tool for deploying the AI Slide Generator to Databricks Apps.
+CLI tool for deploying the Databricks Chat Template to Databricks Apps.
 
 ## Usage
 
@@ -81,7 +81,7 @@ Settings are read from `config/deployment.yaml`:
 ```yaml
 environments:
   development:
-    app_name: "ai-slide-generator-dev"
+    app_name: "chat-template-dev"
     workspace_path: "/Workspace/Users/{username}/apps/dev/..."
     permissions:
       - user_name: "you@example.com"
@@ -91,7 +91,7 @@ environments:
       ENVIRONMENT: "development"
       LOG_LEVEL: "DEBUG"
     lakebase:
-      database_name: "ai-slide-generator-dev-db"
+      database_name: "chat-template-dev-db"
       schema: "app_data"
       capacity: "CU_1"
 
@@ -121,4 +121,3 @@ Copy `config/deployment.example.yaml` to `config/deployment.yaml` and customize.
 - Permission to create Apps and Lakebase instances
 - Python build tools: `pip install build`
 - Node.js for frontend build
-

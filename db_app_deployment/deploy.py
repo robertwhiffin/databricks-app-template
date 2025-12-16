@@ -1,6 +1,6 @@
 """Databricks App deployment automation.
 
-This script automates the deployment of the AI Slide Generator to Databricks Apps.
+This script automates the deployment of the Databricks Chat Template to Databricks Apps.
 It handles building, packaging, uploading, and deploying the application.
 
 Usage:
@@ -159,7 +159,7 @@ def create_staging_directory(
         Path to staging directory
     """
     print("📁 Creating staging directory...")
-    staging_dir = Path(tempfile.mkdtemp(prefix="ai-slide-generator-deploy-"))
+    staging_dir = Path(tempfile.mkdtemp(prefix="chat-template-deploy-"))
 
     # Copy Python wheel
     print("  Copying Python wheel...")
@@ -721,7 +721,7 @@ def deploy(
 def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
-        description="Deploy AI Slide Generator to Databricks Apps"
+        description="Deploy Databricks Chat Template to Databricks Apps"
     )
 
     parser.add_argument(

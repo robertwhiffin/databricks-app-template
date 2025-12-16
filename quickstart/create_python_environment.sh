@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# AI Slide Generator - Python Environment Setup
+# Databricks Chat Template - Python Environment Setup
 # Creates virtual environment and installs dependencies using uv
 
 set -e

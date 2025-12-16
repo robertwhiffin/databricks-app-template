@@ -1,13 +1,20 @@
 # Deployment configuration for Databricks Chat Template
 # This file defines deployment targets for different environments (dev, staging, production)
+#
+# CUSTOMIZATION REQUIRED:
+# Replace the following placeholders with your actual values:
+#   - YOUR_EMAIL@example.com  -> Your Databricks user email
+#   - YOUR_USERNAME           -> Your Databricks username (for workspace paths)
 
 environments:
   development:
     app_name: "chat-template-dev"
     description: "Databricks Chat Template - Development Environment"
-    workspace_path: "/Workspace/Users/{username}/.apps/dev/chat-template"
+    # TODO: Replace YOUR_USERNAME with your Databricks username
+    workspace_path: "/Workspace/Users/YOUR_EMAIL@example.com/.apps/dev/chat-template"
     permissions:
-      - user_name: "robert.whiffin@databricks.com"
+      # TODO: Replace with your Databricks user email
+      - user_name: "YOUR_EMAIL@example.com"
         permission_level: "CAN_MANAGE"
     compute_size: "MEDIUM"  # Options: MEDIUM, LARGE
     env_vars:
@@ -25,9 +32,11 @@ environments:
     description: "Databricks Chat Template - Staging Environment"
     workspace_path: "/Workspace/Shared/apps/staging/chat-template"
     permissions:
+      # TODO: Replace "developers" with your team's group name
       - group_name: "developers"
         permission_level: "CAN_USE"
-      - user_name: "{username}"
+      # TODO: Replace with your Databricks user email
+      - user_name: "YOUR_EMAIL@example.com"
         permission_level: "CAN_MANAGE"
     compute_size: "MEDIUM"  # Options: MEDIUM, LARGE
     env_vars:
@@ -42,9 +51,10 @@ environments:
 
   production:
     app_name: "chat-template"
-    description: "AI Slide Generator - Production"
+    description: "Databricks Chat Template - Production"
     workspace_path: "/Workspace/Shared/apps/production/chat-template"
     permissions:
+      # TODO: Replace with your organization's group names
       - group_name: "users"
         permission_level: "CAN_USE"
       - group_name: "admins"

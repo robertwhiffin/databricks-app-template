@@ -204,26 +204,6 @@ class SessionManager:
             session = self._get_session_or_raise(db, session_id)
             session.last_activity = datetime.utcnow()
 
-    def set_genie_conversation_id(
-        self,
-        session_id: str,
-        conversation_id: Optional[str],
-    ) -> None:
-        """Set or clear the Genie conversation ID for a session.
-
-        Args:
-            session_id: Session to update
-            conversation_id: Genie conversation ID (or None to clear)
-        """
-        with get_db_session() as db:
-            session = self._get_session_or_raise(db, session_id)
-            session.genie_conversation_id = conversation_id
-
-            logger.info(
-                "Updated Genie conversation ID",
-                extra={"session_id": session_id, "conversation_id": conversation_id},
-            )
-
     # Message operations
     def add_message(
         self,
@@ -457,7 +437,7 @@ class SessionManager:
     def set_chat_request_result(
         self, request_id: str, result: Optional[dict]
     ) -> None:
-        """Store final result (slides, raw_html, etc).
+        """Store final result for async polling.
 
         Args:
             request_id: Request ID to update

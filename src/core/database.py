@@ -92,7 +92,7 @@ def _get_database_url() -> str:
         return url
 
     # Default to local PostgreSQL for development
-    return "postgresql://localhost/ai_slide_generator"
+    return "postgresql://localhost/chat_template"
 
 
 def _create_engine():

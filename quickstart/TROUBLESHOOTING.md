@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-Common issues and solutions for the AI Slide Generator.
+Common issues and solutions for the Databricks Chat Template.
 
 ## Table of Contents
 
@@ -54,10 +54,10 @@ pip install -r requirements.txt
 pg_isready
 
 # Check if database exists
-psql -l | grep databricks_chat_app
+psql -l | grep chat_template
 
 # Test connection manually
-psql -d databricks_chat_app -c "\conninfo"
+psql -d chat_template -c "\conninfo"
 ```
 
 **Solutions:**
@@ -78,7 +78,7 @@ sudo systemctl enable postgresql  # Start on boot
 ./quickstart/setup_database.sh
 
 # Or manually
-createdb databricks_chat_app
+createdb chat_template
 ```
 
 **3. Permission issues:**
@@ -93,7 +93,7 @@ sudo -u postgres createuser -s $(whoami)
 **4. Wrong DATABASE_URL:**
 Check `.env` file has correct format:
 ```
-DATABASE_URL=postgresql://localhost:5432/databricks_chat_app
+DATABASE_URL=postgresql://localhost:5432/chat_template
 ```
 
 ### "Default profile already exists"
@@ -103,7 +103,7 @@ DATABASE_URL=postgresql://localhost:5432/databricks_chat_app
 **Solution:** This is normal! The database is already set up. If you need to reset:
 ```bash
 # Reset database (WARNING: deletes all data)
-dropdb databricks_chat_app
+dropdb chat_template
 ./quickstart/setup_database.sh
 ```
 
@@ -159,8 +159,8 @@ DATABRICKS_HOST=http://your-workspace.cloud.databricks.com
 
 1. **Generate new token:**
    - Go to Databricks workspace
-   - Click User icon → Settings
-   - Developer → Access Tokens
+   - Click User icon - Settings
+   - Developer - Access Tokens
    - Generate New Token
    - Copy and update `.env`
 
@@ -169,27 +169,24 @@ DATABRICKS_HOST=http://your-workspace.cloud.databricks.com
    - No spaces or quotes
    - Full token copied
 
-### "Genie space not found"
+### "Model serving endpoint not found"
 
-**Problem:** Configured Genie space doesn't exist or you don't have access.
+**Problem:** Configured LLM endpoint doesn't exist or you don't have access.
 
 **Solution:**
 
-1. **Verify Genie space ID:**
+1. **Verify endpoint exists:**
+   - Go to Databricks workspace
+   - Navigate to Serving - Model Serving
+   - Confirm endpoint name matches configuration
+
+2. **Check configuration:**
    ```bash
-   # Check settings in database
-   psql -d databricks_chat_app -c "SELECT space_id, space_name FROM config_genie_spaces;"
+   psql -d chat_template -c "SELECT llm_endpoint FROM config_ai_infra;"
    ```
 
-2. **List available spaces:**
-   ```bash
-   source .venv/bin/activate
-   python scripts/test_endpoint.py
-   ```
-
-3. **Update space ID:**
-   - Find correct space ID in Databricks workspace
-   - Update in web UI (Settings → Genie Spaces)
+3. **Update endpoint:**
+   - Use Settings UI in the application
    - Or update database directly
 
 ---
@@ -252,16 +249,16 @@ tail -f logs/backend.log
 3. **Wrong API URL:**
    Check `frontend/.env` or `vite.config.ts`
 
-### "Slides not rendering"
+### "Chat messages not appearing"
 
-**Problem:** Chart.js or HTML issues.
+**Problem:** WebSocket or API issues.
 
 **Solutions:**
 
 1. **Check browser console** for JavaScript errors
-2. **View raw HTML** to see what AI generated
-3. **Check backend logs** for parsing errors
-4. **Try regenerating** slides with simpler prompt
+2. **Check network tab** for failed API requests
+3. **Verify backend logs** for errors
+4. **Restart the application**
 
 ---
 
@@ -305,7 +302,7 @@ pip install -r requirements.txt
 
 1. **Check MLflow configuration:**
    ```bash
-   psql -d databricks_chat_app -c "SELECT experiment_name FROM config_mlflow;"
+   psql -d chat_template -c "SELECT experiment_name FROM config_mlflow;"
    ```
 
 2. **Verify experiment path exists** in Databricks workspace
@@ -316,14 +313,14 @@ pip install -r requirements.txt
    python -c "import mlflow; print(mlflow.get_tracking_uri())"
    ```
 
-### "Agent generation timeout"
+### "LLM generation timeout"
 
-**Problem:** LLM calls taking too long.
+**Problem:** Model serving calls taking too long.
 
 **Solutions:**
 
 1. **Check model endpoint** is running in Databricks
-2. **Reduce max_slides** (try 5 instead of 10)
+2. **Reduce max_tokens** in configuration
 3. **Simplify prompt** (less complex requests)
 4. **Check backend logs** for specific errors:
    ```bash
@@ -334,21 +331,22 @@ pip install -r requirements.txt
 
 ## Performance Issues
 
-### "Slow slide generation"
+### "Slow response times"
 
 **Causes & Solutions:**
 
-1. **Large number of slides:**
-   - Reduce `max_slides` to 5-8
-   - Split into multiple requests
-
-2. **Complex Genie queries:**
-   - Check Genie query performance in Databricks
-   - Simplify data requests
-
-3. **Model endpoint throttling:**
+1. **Model endpoint latency:**
    - Check Databricks model serving metrics
-   - Consider using higher-tier endpoint
+   - Consider using a different model
+   - Reduce max_tokens parameter
+
+2. **Database queries:**
+   - Check database connection pooling
+   - Run `VACUUM ANALYZE` on PostgreSQL
+
+3. **Network latency:**
+   - Verify network connectivity to Databricks
+   - Check for proxy/firewall issues
 
 ### "High memory usage"
 
@@ -372,13 +370,13 @@ pip install -r requirements.txt
 **Solution:**
 ```bash
 # Check database size
-psql -d databricks_chat_app -c "SELECT pg_size_pretty(pg_database_size('databricks_chat_app'));"
+psql -d chat_template -c "SELECT pg_size_pretty(pg_database_size('chat_template'));"
 
 # Vacuum database
-psql -d databricks_chat_app -c "VACUUM FULL;"
+psql -d chat_template -c "VACUUM FULL;"
 
 # Archive old settings history
-psql -d databricks_chat_app -c "DELETE FROM config_history WHERE timestamp < NOW() - INTERVAL '30 days';"
+psql -d chat_template -c "DELETE FROM config_history WHERE timestamp < NOW() - INTERVAL '30 days';"
 ```
 
 ---
@@ -404,16 +402,15 @@ console.log('API response:', response);
 
 ```bash
 # Connect to database
-psql -d databricks_chat_app
+psql -d chat_template
 
 # Check current profile
 SELECT * FROM config_profiles WHERE is_default = true;
 
 # Check all configuration
-SELECT p.name, ai.llm_endpoint, g.space_name
+SELECT p.name, ai.llm_endpoint
 FROM config_profiles p
-JOIN config_ai_infra ai ON p.id = ai.profile_id
-JOIN config_genie_spaces g ON p.id = g.profile_id;
+JOIN config_ai_infra ai ON p.id = ai.profile_id;
 
 # View recent settings changes
 SELECT * FROM config_history ORDER BY timestamp DESC LIMIT 10;
@@ -429,10 +426,10 @@ curl -v -H "Authorization: Bearer $DATABRICKS_TOKEN" \
 # Test backend API
 curl -v http://localhost:8000/api/health
 
-# Test with actual chat request
+# Test chat endpoint
 curl -v -X POST http://localhost:8000/api/chat \
   -H "Content-Type: application/json" \
-  -d '{"message": "Create 3 slides about testing", "max_slides": 3}'
+  -d '{"message": "Hello, how are you?", "session_id": "test-session"}'
 ```
 
 ---
@@ -462,12 +459,10 @@ If you're still stuck:
 
 4. **Review documentation:**
    - [README.md](../README.md)
-   - [Backend Overview](../docs/technical/backend-overview.md)
-   - [Frontend Overview](../docs/technical/frontend-overview.md)
+   - [CLAUDE.md](../CLAUDE.md)
 
 5. **Open an issue** on GitHub with:
    - Error messages
    - Relevant logs
    - Steps to reproduce
    - Environment details (OS, Python version, etc.)
-

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# AI Slide Generator - Master Setup Script
+# Databricks Chat Template - Master Setup Script
 # One-command setup for macOS
 
 set -e
@@ -18,7 +18,7 @@ cd "$PROJECT_ROOT"
 
 echo ""
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║         AI Slide Generator - Automated Setup              ║${NC}"
+echo -e "${BLUE}║       Databricks Chat Template - Automated Setup          ║${NC}"
 echo -e "${BLUE}║                    macOS Only                              ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""

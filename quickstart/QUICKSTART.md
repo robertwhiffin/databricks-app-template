@@ -1,7 +1,7 @@
-# Quick Start Guide - AI Slide Generator
+# Quick Start Guide - Databricks Chat Template
 
-**Platform:** macOS only  
-**Time:** ~5 minutes ⏱️
+**Platform:** macOS only (automated setup)  
+**Time:** ~5 minutes
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ Before starting, you need:
 ### Step 1: Clone Repository
 ```bash
 git clone <repository-url>
-cd ai-slide-generator
+cd databricks-chat-app
 ```
 
 ### Step 2: Configure Databricks Credentials (Optional)
@@ -29,7 +29,7 @@ cp .env.example .env
 nano .env  # Set DATABRICKS_HOST and DATABRICKS_TOKEN
 ```
 
-> 💡 **Tip:** You can skip this and configure later. The setup will run without it.
+> **Tip:** You can skip this and configure later. The setup will run without it.
 
 ### Step 3: Run Automated Setup
 ```bash
@@ -37,11 +37,11 @@ nano .env  # Set DATABRICKS_HOST and DATABRICKS_TOKEN
 ```
 
 This single command will:
-1. ✓ Check system dependencies (offer to install if missing)
-2. ✓ Create Python virtual environment using uv
-3. ✓ Install all Python dependencies
-4. ✓ Create PostgreSQL database
-5. ✓ Run migrations and load default profiles
+1. Check system dependencies (offer to install if missing)
+2. Create Python virtual environment using uv
+3. Install all Python dependencies
+4. Create PostgreSQL database
+5. Run migrations and load default profiles
 
 ### Step 4: Start Application
 ```bash
@@ -117,21 +117,22 @@ rm -rf .venv
 
 ## Quick Test
 
-Once running, try these example prompts:
+Once running, try these example prompts in the chat interface:
 
-1. **Basic generation:**
+1. **Basic conversation:**
    ```
-   Create a 10-page slide deck about Q3 sales performance
-   ```
-
-2. **Data-driven slides:**
-   ```
-   Show me consumption trends for the last 6 months with charts
+   Hello! What can you help me with today?
    ```
 
-3. **Editing slides:**
-   - Select slides 2-3 in the slide ribbon
-   - Type: `Combine these into a single chart slide`
+2. **Ask a question:**
+   ```
+   Explain the key benefits of using Databricks for data engineering.
+   ```
+
+3. **Request assistance:**
+   ```
+   Help me understand how to structure a data pipeline.
+   ```
 
 ---
 
@@ -150,7 +151,7 @@ brew services start postgresql@14
 ### "Database connection failed"
 ```bash
 # Test connection manually
-psql -d databricks_chat_app -c "SELECT version();"
+psql -d chat_template -c "SELECT version();"
 
 # If fails, recreate database
 ./quickstart/setup_database.sh
@@ -184,10 +185,10 @@ lsof -ti:3000 | xargs kill -9
 ### Python Dependencies (via uv)
 Installed in `.venv/` from `requirements.txt`:
 - FastAPI, Uvicorn - Backend API
-- SQLAlchemy, Alembic - Database ORM and migrations
+- SQLAlchemy - Database ORM
 - Databricks SDK - Integration with Databricks
-- LangChain - LLM orchestration
-- BeautifulSoup4 - HTML parsing
+- Pydantic - Data validation
+- MLflow - Observability and tracing
 
 ### Why uv?
 - **10-100x faster** than pip
@@ -202,16 +203,13 @@ Once you're up and running:
 
 1. **Read the main documentation:** [README.md](../README.md)
 
-2. **Explore features:**
-   - Drag-and-drop slide reordering
-   - HTML editing with Monaco editor
-   - Slide duplication and deletion
-   - Raw HTML debugging views
+2. **Customize the chat model:**
+   - Edit `src/services/chat_model.py`
+   - Modify system prompts in `config/prompts.yaml`
 
-3. **Review technical docs:**
-   - [Backend Overview](../docs/technical/backend-overview.md)
-   - [Frontend Overview](../docs/technical/frontend-overview.md)
-   - [Database Configuration](../docs/technical/database-configuration.md)
+3. **Configure profiles:**
+   - Use the Settings UI to manage LLM endpoints
+   - Or edit `config/seed_profiles.yaml`
 
 4. **Run tests:**
    ```bash
@@ -232,10 +230,10 @@ Once you're up and running:
 ## Getting Help
 
 - **Setup issues?** Check [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
-- **Development questions?** See [../docs/](../docs/)
+- **Development questions?** See the main [README.md](../README.md)
 - **Found a bug?** Open an issue on GitHub
 
 ---
 
-**Total time:** ~5 minutes ⏱️  
-**Ready to generate slides!** 🎉
+**Total time:** ~5 minutes  
+**Ready to chat!**

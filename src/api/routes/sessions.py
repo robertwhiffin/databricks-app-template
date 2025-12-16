@@ -90,13 +90,13 @@ async def list_sessions(
 
 @router.get("/{session_id}")
 async def get_session(session_id: str):
-    """Get session details including messages and slides.
+    """Get session details including messages.
 
     Args:
         session_id: Session identifier
 
     Returns:
-        Session information with messages and slide_deck
+        Session information with messages
     """
     try:
         session_manager = get_session_manager()
@@ -107,13 +107,9 @@ async def get_session(session_id: str):
         # Get messages for conversation restoration
         messages = await asyncio.to_thread(session_manager.get_messages, session_id)
 
-        # Get slide deck if it exists
-        slide_deck = await asyncio.to_thread(session_manager.get_slide_deck, session_id)
-
         return {
             **session,
             "messages": messages,
-            "slide_deck": slide_deck,
         }
 
     except SessionNotFoundError:
@@ -233,35 +229,6 @@ async def get_session_messages(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get messages: {str(e)}",
-        ) from e
-
-
-@router.get("/{session_id}/slides")
-async def get_session_slides(session_id: str):
-    """Get slide deck for a session.
-
-    Args:
-        session_id: Session identifier
-
-    Returns:
-        Slide deck info or null if no deck
-    """
-    try:
-        session_manager = get_session_manager()
-        deck = await asyncio.to_thread(session_manager.get_slide_deck, session_id)
-
-        return {"session_id": session_id, "slide_deck": deck}
-
-    except SessionNotFoundError:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Session not found: {session_id}",
-        )
-    except Exception as e:
-        logger.error(f"Failed to get session slides: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get slides: {str(e)}",
         ) from e
 
 

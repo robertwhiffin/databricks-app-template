@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# AI Slide Generator - Database Setup Script
+# Databricks Chat Template - Database Setup Script
 # Automatically creates PostgreSQL database and runs migrations
 
 set -e
@@ -13,7 +13,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║        AI Slide Generator - Database Setup                ║${NC}"
+echo -e "${BLUE}║       Databricks Chat Template - Database Setup           ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 

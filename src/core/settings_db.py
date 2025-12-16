@@ -140,15 +140,15 @@ class MLFlowSettings(BaseSettings):
 
     # Registry
     registry_uri: str = "databricks-uc"
-    model_name: str = "slide_generator"
-    dev_model_name: str = "slide_generator_dev"
+    model_name: str = "chat_model"
+    dev_model_name: str = "chat_model_dev"
 
     # Serving environments
     serving_dev: MLFlowServingEnvironment = Field(default_factory=lambda: MLFlowServingEnvironment(
-        endpoint_name="slide-generator-dev"
+        endpoint_name="chat-template-dev"
     ))
     serving_prod: MLFlowServingEnvironment = Field(default_factory=lambda: MLFlowServingEnvironment(
-        endpoint_name="slide-generator-prod"
+        endpoint_name="chat-template-prod"
     ))
 
     # Logging options

@@ -14,7 +14,7 @@ class ConfigHistory(Base):
 
     id = Column(Integer, primary_key=True)
     profile_id = Column(Integer, ForeignKey("config_profiles.id", ondelete="CASCADE"), nullable=False)
-    domain = Column(String(50), nullable=False)  # 'ai_infra', 'genie', 'mlflow', 'prompts', 'profile'
+    domain = Column(String(50), nullable=False)  # 'ai_infra', 'mlflow', 'prompts', 'profile'
     action = Column(String(50), nullable=False)  # 'create', 'update', 'delete', 'activate'
     changed_by = Column(String(255), nullable=False)
     changes = Column(JSON, nullable=False)  # {"field": {"old": "...", "new": "..."}}

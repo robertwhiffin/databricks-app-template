@@ -59,27 +59,6 @@ class LLMError(AppException):
         super().__init__(message, details, error_code="LLM_ERROR")
 
 
-class GenieError(AppException):
-    """Raised when Genie service operations fail."""
-
-    def __init__(self, message: str, details: Optional[dict[str, Any]] = None):
-        super().__init__(message, details, error_code="GENIE_ERROR")
-
-
-class DataRetrievalError(AppException):
-    """Raised when data retrieval from Genie fails."""
-
-    def __init__(self, message: str, details: Optional[dict[str, Any]] = None):
-        super().__init__(message, details, error_code="DATA_RETRIEVAL_ERROR")
-
-
-class SlideGenerationError(AppException):
-    """Raised when slide generation fails."""
-
-    def __init__(self, message: str, details: Optional[dict[str, Any]] = None):
-        super().__init__(message, details, error_code="SLIDE_GENERATION_ERROR")
-
-
 class TimeoutError(AppException):
     """Raised when operations timeout."""
 

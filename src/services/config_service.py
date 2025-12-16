@@ -139,7 +139,6 @@ class ConfigService:
         self,
         profile_id: int,
         system_prompt: str = None,
-        slide_editing_instructions: str = None,
         user_prompt_template: str = None,
         user: str = None,
     ) -> ConfigPrompts:
@@ -151,10 +150,6 @@ class ConfigService:
         if system_prompt is not None and system_prompt != config.system_prompt:
             changes["system_prompt"] = {"old": "...", "new": "..."}  # Don't log full prompts
             config.system_prompt = system_prompt
-
-        if slide_editing_instructions is not None and slide_editing_instructions != config.slide_editing_instructions:
-            changes["slide_editing_instructions"] = {"old": "...", "new": "..."}
-            config.slide_editing_instructions = slide_editing_instructions
 
         if user_prompt_template is not None and user_prompt_template != config.user_prompt_template:
             changes["user_prompt_template"] = {"old": config.user_prompt_template, "new": user_prompt_template}

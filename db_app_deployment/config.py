@@ -80,7 +80,7 @@ def load_deployment_config(env: str) -> DeploymentConfig:
 
     return DeploymentConfig(
         app_name=env_config["app_name"],
-        description=env_config.get("description", "AI Slide Generator"),
+        description=env_config.get("description", "Databricks Chat Template"),
         workspace_path=env_config["workspace_path"],
         permissions=env_config["permissions"],
         compute_size=env_config.get("compute_size", "MEDIUM"),

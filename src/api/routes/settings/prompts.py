@@ -90,7 +90,6 @@ def update_prompts_config(
         config = service.update_prompts_config(
             profile_id=profile_id,
             system_prompt=request.system_prompt,
-            slide_editing_instructions=request.slide_editing_instructions,
             user_prompt_template=request.user_prompt_template,
             user=user,
         )

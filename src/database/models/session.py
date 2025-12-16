@@ -42,7 +42,7 @@ class ChatRequest(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     completed_at = Column(DateTime, nullable=True)
 
-    # Final result data (JSON) - slides, raw_html, replacement_info
+    # Final result data (JSON) - stores response data for async polling
     result_json = Column(Text, nullable=True)
 
     # Relationship
@@ -58,7 +58,7 @@ class UserSession(Base):
     """User session for tracking conversation state.
 
     Each session represents an independent conversation context with its own
-    chat history and slide deck state.
+    chat history and application state.
     """
 
     __tablename__ = "user_sessions"
@@ -115,7 +115,7 @@ class SessionMessage(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Optional metadata
-    message_type = Column(String(50))  # 'chat', 'slide_update', 'error', etc.
+    message_type = Column(String(50))  # 'chat', 'tool_call', 'tool_result', 'error', etc.
     metadata_json = Column(Text)  # JSON string for additional metadata
 
     # Async polling support - links messages to specific chat requests

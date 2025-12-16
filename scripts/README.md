@@ -1,6 +1,6 @@
 # Scripts
 
-Utility scripts for the AI Slide Generator.
+Utility scripts for the Databricks Chat Template.
 
 ## `init_database.py`
 
@@ -14,10 +14,10 @@ python scripts/init_database.py
 **What it does:**
 1. Creates database tables (if they don't exist)
 2. Loads profiles from `config/seed_profiles.yaml`
-3. Creates config records (AI settings, Genie space, MLflow, prompts)
+3. Creates config records (AI settings, MLflow, prompts)
 
 **Prerequisites:**
-- PostgreSQL running with `ai_slide_generator` database created
+- PostgreSQL running with `chat_template` database created
 - `.env` file with `DATABASE_URL` configured
 - `config/seed_profiles.yaml` exists
 
@@ -35,17 +35,13 @@ profiles:
     description: "Default configuration"
     is_default: true
     ai_infra:
-      llm_endpoint: "databricks-llama-3-1-70b-instruct"
+      llm_endpoint: "databricks-claude-sonnet-4-5"
       llm_temperature: 0.7
-      llm_max_tokens: 16000
-    genie_space:
-      space_id: "your-space-id"
-      space_name: "Your Space"
+      llm_max_tokens: 4096
     mlflow:
-      experiment_name: "/Users/{username}/ai-slide-generator"
+      experiment_name: "/Users/{username}/chat-template"
     prompts:
       system_prompt: "..."
-      slide_editing_instructions: "..."
       user_prompt_template: "..."
 ```
 

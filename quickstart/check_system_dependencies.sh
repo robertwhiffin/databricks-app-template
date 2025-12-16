@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# AI Slide Generator - System Dependency Checker
+# Databricks Chat Template - System Dependency Checker
 # Verifies and optionally installs system dependencies on macOS
 
 set -e

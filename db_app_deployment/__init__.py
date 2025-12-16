@@ -1,2 +1,2 @@
-"""Infrastructure and deployment automation for AI Slide Generator."""
+"""Infrastructure and deployment automation for Databricks Chat Template."""
 
