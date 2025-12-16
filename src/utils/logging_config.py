@@ -1,18 +1,21 @@
 """
 Logging configuration for the application.
 
-This module sets up structured logging based on configuration settings.
+This module sets up structured logging based on environment variables.
+
+Environment Variables:
+    LOG_LEVEL: Logging level (default: INFO)
+    LOG_FORMAT: Logging format - 'json' or 'text' (default: json)
 """
 
 import json
 import logging
 import logging.handlers
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-
-from src.core.settings_db import get_settings
 
 
 class JSONFormatter(logging.Formatter):
@@ -84,53 +87,36 @@ class TextFormatter(logging.Formatter):
         )
 
 
-def setup_logging(settings=None) -> None:
+def setup_logging() -> None:
     """
-    Set up application logging based on configuration.
-
-    Args:
-        settings: Optional settings object (will use get_settings() if not provided)
+    Set up application logging based on environment variables.
+    
+    Environment Variables:
+        LOG_LEVEL: Logging level (default: INFO)
+        LOG_FORMAT: Logging format - 'json' or 'text' (default: json)
     """
-    if settings is None:
-        settings = get_settings()
-
-    log_config = settings.logging
+    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+    log_format = os.getenv("LOG_FORMAT", "json").lower()
 
     # Get root logger
     root_logger = logging.getLogger()
-    root_logger.setLevel(getattr(logging, log_config.level))
+    root_logger.setLevel(getattr(logging, log_level, logging.INFO))
 
     # Remove existing handlers
     root_logger.handlers.clear()
 
     # Create console handler
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(getattr(logging, log_config.level))
+    console_handler.setLevel(getattr(logging, log_level, logging.INFO))
 
     # Set formatter based on settings
-    if log_config.format == "json":
+    if log_format == "json":
         formatter = JSONFormatter()
     else:
         formatter = TextFormatter()
 
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
-
-    # Add file handler if log file is specified
-    if log_config.log_file:
-        log_file_path = Path(log_config.log_file)
-        log_file_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Use rotating file handler to prevent unbounded growth
-        max_bytes = log_config.max_file_size_mb * 1024 * 1024
-        file_handler = logging.handlers.RotatingFileHandler(
-            log_file_path,
-            maxBytes=max_bytes,
-            backupCount=log_config.backup_count,
-        )
-        file_handler.setLevel(getattr(logging, log_config.level))
-        file_handler.setFormatter(formatter)
-        root_logger.addHandler(file_handler)
 
     # Set specific loggers to appropriate levels
     # Reduce noise from third-party libraries
@@ -142,9 +128,8 @@ def setup_logging(settings=None) -> None:
     root_logger.info(
         "Logging configured",
         extra={
-            "level": log_config.level,
-            "format": log_config.format,
-            "log_file": log_config.log_file,
+            "level": log_level,
+            "format": log_format,
         },
     )
 
@@ -215,4 +200,3 @@ def remove_request_id_from_logger(logger: logging.Logger) -> None:
     logger.filters = [
         f for f in logger.filters if not isinstance(f, RequestIDFilter)
     ]
-

@@ -9,7 +9,7 @@ easily understand and modify.
 💡 CUSTOMIZATION TIP:
    - Want to add RAG? Modify the generate() method to include retrieved context
    - Want function calling? Add tool handling in generate()
-   - Want to change the model? Update the endpoint in config/seed_profiles.yaml
+   - Want to change the model? Set the LLM_ENDPOINT environment variable
 
 📚 WHAT THIS FILE DOES:
    1. Wraps Databricks model serving endpoint calls
@@ -18,18 +18,21 @@ easily understand and modify.
    4. Manages errors gracefully
 
 🔗 RELATED FILES:
-   - config/prompts.yaml - System prompts
-   - config/seed_profiles.yaml - Model endpoint configuration
+   - src/core/settings.py - Environment-based configuration
    - src/api/routes/chat.py - API endpoint that uses this class
+
+Environment Variables:
+   - LLM_ENDPOINT: Model serving endpoint name (default: databricks-claude-sonnet-4-5)
+   - LLM_TEMPERATURE: Sampling temperature 0.0-2.0 (default: 0.7)
+   - LLM_MAX_TOKENS: Maximum response tokens (default: 2048)
+   - SYSTEM_PROMPT: System prompt for the AI
 """
 from typing import AsyncGenerator, Dict, List, Optional
-import json
 import asyncio
-from functools import partial
 
 from databricks.sdk.service.serving import ChatMessage, ChatMessageRole
 from src.core.databricks_client import get_databricks_client
-from src.core.settings_db import get_settings
+from src.core.settings import get_settings
 
 
 class ChatModel:
@@ -54,18 +57,17 @@ class ChatModel:
     """
 
     def __init__(self):
-        """Initialize the chat model with settings from database.
+        """Initialize the chat model with settings from environment.
 
-        ⚠️ IMPORTANT: This loads settings from the DATABASE, not from YAML files.
-        YAML files (config/*.yaml) only seed the initial database state.
-        To change settings, use the UI or update the database directly.
+        Settings are loaded from environment variables with sensible defaults.
+        No database or YAML files needed for configuration.
 
         What happens here:
-        1. get_settings() loads the active profile from database
+        1. get_settings() loads settings from environment variables
         2. get_databricks_client() returns a singleton WorkspaceClient
         3. Settings include: model endpoint, temperature, max_tokens, prompts
         """
-        # Load current settings from database (includes model endpoint, prompts, etc.)
+        # Load settings from environment variables
         self.settings = get_settings()
 
         # Get singleton Databricks client (reused across requests for efficiency)
@@ -122,7 +124,7 @@ class ChatModel:
             Exception: If the model serving endpoint returns an error
         """
         # STEP 1: Use settings defaults if parameters not provided
-        # These come from the database profile (config/seed_profiles.yaml seeds initial values)
+        # These come from environment variables (see src/core/settings.py)
         max_tokens = max_tokens or self.settings.llm.max_tokens
         temperature = temperature or self.settings.llm.temperature
 
@@ -189,7 +191,7 @@ class ChatModel:
                 f"💡 TROUBLESHOOTING:\n"
                 f"1. Verify the endpoint exists: Check Databricks UI > Serving\n"
                 f"2. Verify endpoint is running: Status should be 'Ready'\n"
-                f"3. Check endpoint name in database: SELECT * FROM ai_infra;\n"
+                f"3. Check endpoint name: LLM_ENDPOINT env var (current: {self.settings.llm.endpoint})\n"
                 f"4. Test endpoint manually: Use Databricks UI to send a test request"
             )
 
@@ -227,8 +229,8 @@ class ChatModel:
         ]
 
         # Call the Databricks model serving endpoint using the SDK
-        # The endpoint name comes from: database > ai_infra table > llm_endpoint column
-        # You can change it via: Settings UI, API, or direct database update
+        # The endpoint name comes from the LLM_ENDPOINT environment variable
+        # Default: databricks-claude-sonnet-4-5
         response = self.client.serving_endpoints.query(
             name=self.settings.llm.endpoint,  # e.g., "databricks-meta-llama-3-1-70b-instruct"
             messages=sdk_messages,
@@ -298,12 +300,11 @@ class ChatModel:
         """Get the system prompt from settings as a formatted message.
 
         The system prompt defines the AI's personality and behavior.
-        It comes from: database > prompts table > system_prompt column
+        It comes from the SYSTEM_PROMPT environment variable (or default).
 
         💡 TO CUSTOMIZE THE AI'S BEHAVIOR:
-        1. Edit config/prompts.yaml (seeds initial value)
-        2. Or update via Settings UI in the app
-        3. Or update database: UPDATE prompts SET system_prompt = '...' WHERE profile_id = 1;
+        Set the SYSTEM_PROMPT environment variable, or modify the default
+        in src/core/settings.py
 
         Example system prompts:
         - Customer support: "You are a helpful customer support agent..."
@@ -316,7 +317,7 @@ class ChatModel:
         """
         return {
             "role": "system",
-            "content": self.settings.prompts.system_prompt  # Loaded from database
+            "content": self.settings.prompts.system_prompt
         }
 
     def format_conversation_context(
@@ -417,7 +418,7 @@ async def chat(user_message: str, conversation_history: Optional[List[Dict[str, 
         print(response)  # "The capital of France is Paris."
         ```
     """
-    # Create a new ChatModel instance (loads settings from database)
+    # Create a new ChatModel instance (loads settings from environment)
     model = ChatModel()
 
     # Use empty list if no history provided

@@ -6,21 +6,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.routes import chat, sessions
-from src.api.routes.settings import (
-    ai_infra_router,
-    mlflow_router,
-    profiles_router,
-    prompts_router,
-)
 from src.core.database import init_db
 # Import models to register them with SQLAlchemy Base before init_db() is called
 from src.database.models import (  # noqa: F401
     ChatRequest,
-    ConfigAIInfra,
-    ConfigHistory,
-    ConfigMLflow,
-    ConfigProfile,
-    ConfigPrompts,
     SessionMessage,
     UserSession,
 )
@@ -71,10 +60,6 @@ app.add_middleware(
 # Register routers
 app.include_router(chat.router)
 app.include_router(sessions.router)
-app.include_router(profiles_router)
-app.include_router(ai_infra_router)
-app.include_router(mlflow_router)
-app.include_router(prompts_router)
 
 
 @app.get("/")

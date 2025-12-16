@@ -1,10 +1,5 @@
-"""Database models."""
+"""Database models for multi-user session management."""
 
-from src.database.models.ai_infra import ConfigAIInfra
-from src.database.models.history import ConfigHistory
-from src.database.models.mlflow import ConfigMLflow
-from src.database.models.profile import ConfigProfile
-from src.database.models.prompts import ConfigPrompts
 from src.database.models.session import (
     ChatRequest,
     SessionMessage,
@@ -13,12 +8,6 @@ from src.database.models.session import (
 
 __all__ = [
     "ChatRequest",
-    "ConfigAIInfra",
-    "ConfigHistory",
-    "ConfigMLflow",
-    "ConfigProfile",
-    "ConfigPrompts",
     "SessionMessage",
     "UserSession",
 ]
-
