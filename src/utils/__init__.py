@@ -4,7 +4,6 @@ from src.utils.error_handling import (
     AppException,
     AuthenticationError,
     ConfigurationError,
-    DataRetrievalError,
     LLMError,
     ResourceNotFoundError,
     TimeoutError,
@@ -18,7 +17,6 @@ __all__ = [
     "AppException",
     "AuthenticationError",
     "ConfigurationError",
-    "DataRetrievalError",
     "LLMError",
     "ResourceNotFoundError",
     "TimeoutError",
@@ -28,4 +26,3 @@ __all__ = [
     "get_logger",
     "setup_logging",
 ]
-
