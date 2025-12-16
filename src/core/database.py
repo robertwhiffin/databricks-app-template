@@ -181,10 +181,13 @@ def get_db_session() -> Generator[Session, None, None]:
 
 
 def init_db():
-    """Create schema (if needed) and all tables in the database.
+    """Create schema (if needed), all tables, and seed default profile.
     
     For Lakebase, creates the schema specified by LAKEBASE_SCHEMA env var
     before creating tables, since SQLAlchemy's create_all() only creates tables.
+    
+    Also seeds a default profile if the database is empty, so the app
+    works out-of-the-box on first deployment.
     """
     engine = get_engine()
     
@@ -204,3 +207,85 @@ def init_db():
     # Create all tables
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables created")
+    
+    # Seed default profile if database is empty
+    _seed_default_profile_if_empty()
+
+
+def _seed_default_profile_if_empty():
+    """Seed a default profile if no profiles exist in the database.
+    
+    This ensures the app works out-of-the-box on first deployment without
+    requiring manual database seeding.
+    """
+    # Import here to avoid circular imports
+    from src.database.models import (
+        ConfigAIInfra,
+        ConfigMLflow,
+        ConfigProfile,
+        ConfigPrompts,
+    )
+    
+    with get_db_session() as db:
+        # Check if any profiles exist
+        existing = db.query(ConfigProfile).first()
+        if existing:
+            logger.info("Database already has profiles, skipping seed")
+            return
+        
+        logger.info("No profiles found, seeding default profile...")
+        
+        # Get username for MLflow experiment name
+        try:
+            from src.core.databricks_client import get_databricks_client
+            client = get_databricks_client()
+            username = client.current_user.me().user_name
+        except Exception:
+            username = os.getenv("USER", "default_user")
+        
+        # Create default profile
+        profile = ConfigProfile(
+            name="Default Chat",
+            description="Standard chat assistant with helpful, informative responses",
+            is_default=True,
+            created_by="system",
+        )
+        db.add(profile)
+        db.flush()  # Get profile ID
+        
+        # Create AI infrastructure settings
+        ai_infra = ConfigAIInfra(
+            profile_id=profile.id,
+            llm_endpoint="databricks-claude-sonnet-4-5",  # Default Databricks Foundation Model
+            llm_temperature=0.7,
+            llm_max_tokens=2048,
+        )
+        db.add(ai_infra)
+        
+        # Create MLflow settings
+        experiment_name = f"/Users/{username}/chat-template-experiments"
+        mlflow_config = ConfigMLflow(
+            profile_id=profile.id,
+            experiment_name=experiment_name,
+        )
+        db.add(mlflow_config)
+        
+        # Create prompts settings
+        prompts = ConfigPrompts(
+            profile_id=profile.id,
+            system_prompt="""You are a helpful AI assistant powered by Databricks. You provide clear,
+accurate, and concise responses to user questions.
+
+Format your responses using markdown for better readability:
+- Use **bold** for emphasis
+- Use bullet points for lists
+- Use code blocks for code snippets
+- Use headings to organize longer responses
+
+Be friendly, professional, and helpful.""",
+            user_prompt_template="{question}",
+        )
+        db.add(prompts)
+        
+        db.commit()
+        logger.info(f"Default profile created successfully (id={profile.id})")
