@@ -4,19 +4,19 @@ import logging
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
 
 from src.api.schemas.chat import ChatRequest, ChatResponse, Message
-from src.api.services.session_manager import SessionManager
+from src.api.services.session_manager import get_session_manager
 from src.services.chat_model import ChatModel
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["chat"])
 
-# Initialize services
-session_manager = SessionManager()
-chat_model = ChatModel()
+
+def get_chat_model():
+    """Get or create chat model instance."""
+    return ChatModel()
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -37,53 +37,67 @@ async def send_message(request: ChatRequest):
         ChatResponse with session_id, messages, and assistant response
     """
     try:
-        # Get or create session
+        session_manager = get_session_manager()
+        
+        # Get or create session (run blocking DB call in thread pool)
         if request.session_id:
             session_id = request.session_id
             # Verify session exists
             try:
-                session_manager.get_session(session_id)
+                await asyncio.to_thread(session_manager.get_session, session_id)
             except Exception:
                 # Session doesn't exist, create it
-                session = session_manager.create_session(user_id="default_user")
+                session = await asyncio.to_thread(
+                    session_manager.create_session, 
+                    user_id="default_user"
+                )
                 session_id = session["session_id"]
         else:
             # Create new session
-            session = session_manager.create_session(user_id="default_user")
+            session = await asyncio.to_thread(
+                session_manager.create_session,
+                user_id="default_user"
+            )
             session_id = session["session_id"]
 
         # Get conversation history
-        history = session_manager.get_messages(session_id)
+        history = await asyncio.to_thread(session_manager.get_messages, session_id)
         conversation_history = [
             {"role": msg["role"], "content": msg["content"]}
             for msg in history
         ]
 
         # Add user message to history
-        session_manager.add_message(
+        await asyncio.to_thread(
+            session_manager.add_message,
             session_id=session_id,
             role="user",
             content=request.message
         )
 
-        # Format messages for model
+        # Get chat model and format messages
+        chat_model = get_chat_model()
         messages = chat_model.format_conversation_context(
             conversation_history=conversation_history,
             new_user_message=request.message
         )
 
-        # Call model
+        # Call model (this is already async)
         response_text = await chat_model.generate(messages)
 
         # Save assistant response
-        session_manager.add_message(
+        await asyncio.to_thread(
+            session_manager.add_message,
             session_id=session_id,
             role="assistant",
             content=response_text
         )
 
         # Get updated message history
-        updated_history = session_manager.get_messages(session_id)
+        updated_history = await asyncio.to_thread(
+            session_manager.get_messages, 
+            session_id
+        )
         messages_list = [
             Message(
                 role=msg["role"],

@@ -22,7 +22,7 @@ easily understand and modify.
    - src/api/routes/chat.py - API endpoint that uses this class
 
 Environment Variables:
-   - LLM_ENDPOINT: Model serving endpoint name (default: databricks-claude-sonnet-4-5)
+   - LLM_ENDPOINT: Model serving endpoint name (default: databricks-meta-llama-3-1-70b-instruct)
    - LLM_TEMPERATURE: Sampling temperature 0.0-2.0 (default: 0.7)
    - LLM_MAX_TOKENS: Maximum response tokens (default: 2048)
    - SYSTEM_PROMPT: System prompt for the AI
@@ -230,7 +230,7 @@ class ChatModel:
 
         # Call the Databricks model serving endpoint using the SDK
         # The endpoint name comes from the LLM_ENDPOINT environment variable
-        # Default: databricks-claude-sonnet-4-5
+        # Default: databricks-meta-llama-3-1-70b-instruct
         response = self.client.serving_endpoints.query(
             name=self.settings.llm.endpoint,  # e.g., "databricks-meta-llama-3-1-70b-instruct"
             messages=sdk_messages,

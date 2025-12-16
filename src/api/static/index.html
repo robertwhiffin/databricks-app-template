@@ -495,6 +495,10 @@
             const typingId = showTypingIndicator();
             
             try {
+                // Add timeout to prevent infinite hang
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+                
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {
@@ -504,10 +508,14 @@
                         message: message,
                         session_id: sessionId
                     }),
+                    signal: controller.signal
                 });
                 
+                clearTimeout(timeoutId);
+                
                 if (!response.ok) {
-                    throw new Error('Failed to send message');
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || `HTTP ${response.status}: Failed to send message`);
                 }
                 
                 const data = await response.json();
@@ -526,7 +534,14 @@
             } catch (error) {
                 console.error('Error:', error);
                 removeTypingIndicator(typingId);
-                addMessageToUI('assistant', '❌ Sorry, there was an error processing your request. Please try again.');
+                
+                let errorMsg = '❌ Sorry, there was an error processing your request.';
+                if (error.name === 'AbortError') {
+                    errorMsg = '⏱️ Request timed out. The model may be starting up - please try again.';
+                } else if (error.message) {
+                    errorMsg = `❌ Error: ${error.message}`;
+                }
+                addMessageToUI('assistant', errorMsg);
             } finally {
                 isLoading = false;
                 document.getElementById('send-btn').disabled = false;

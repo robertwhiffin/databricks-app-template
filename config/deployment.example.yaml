@@ -22,6 +22,8 @@ environments:
       LOG_LEVEL: "DEBUG"
       LAKEBASE_INSTANCE: "chat-template-dev-db"
       LAKEBASE_SCHEMA: "app_data"
+      # LLM Configuration - set your model serving endpoint
+      LLM_ENDPOINT: "databricks-claude-sonnet-4-5"
     lakebase:
       database_name: "chat-template-dev-db"
       schema: "app_data"
