@@ -1,6 +1,6 @@
 # Databricks Chat App Template
 
-A production-ready chat application template for Databricks with full infrastructure for building conversational AI applications.
+A production-ready chat application template for Databricks with multi-user session management and a simple built-in UI.
 
 ## What's Included
 
@@ -8,13 +8,11 @@ This template provides enterprise-grade infrastructure out of the box:
 
 ### 🏗️ **Production Infrastructure**
 - **Multi-user session management** with Lakebase persistence
-- **Database-backed configuration** with hot-reload (no app restarts needed)
+- **Environment-based configuration** (no database config needed)
 - **Automated deployment** to Databricks Apps with CLI tool
 - **Development scripts** for local setup (`./start_app.sh`, `./stop_app.sh`)
-- **Lakebase integration** with automatic instance creation and permissions
-- **MLflow tracing** for observability
-- **SSE streaming** with polling fallback for Databricks Apps
-- **Profile management** UI for different AI configurations
+- **Lakebase integration** with automatic schema creation
+- **Built-in chat UI** - no frontend build required
 
 ### 🤖 **Direct Model Serving Integration**
 - Clean wrapper around Databricks model serving endpoints (no LangChain complexity)
@@ -25,7 +23,6 @@ This template provides enterprise-grade infrastructure out of the box:
 ### 📦 **Developer Experience**
 - One-command setup for macOS (`./quickstart/setup.sh`)
 - Automatic PostgreSQL setup for local development
-- Frontend React app with TypeScript and Tailwind CSS
 - Comprehensive error handling and logging
 - Type-safe API with Pydantic validation
 
@@ -37,7 +34,6 @@ This template provides enterprise-grade infrastructure out of the box:
 
 - macOS (automated setup) or Linux/Windows (manual steps)
 - Python 3.10+
-- Node.js 18+
 - PostgreSQL 14+ (installed automatically on macOS)
 - Databricks workspace with Apps enabled
 
@@ -57,17 +53,16 @@ cp .env.example .env
 # 4. Start the application
 ./start_app.sh
 
-# 5. Open http://localhost:3000
+# 5. Open http://localhost:8000
 
 # 6. Stop when done
 ./stop_app.sh
 ```
 
 The setup script will:
-- Install system dependencies (Homebrew, Python, PostgreSQL, Node.js)
+- Install system dependencies (Homebrew, Python, PostgreSQL)
 - Create Python virtual environment
 - Initialize PostgreSQL database
-- Install frontend dependencies
 
 ### Deploy to Databricks
 
@@ -76,6 +71,9 @@ The setup script will:
 cp config/deployment.example.yaml config/deployment.yaml
 
 # 2. Edit deployment.yaml with your workspace details
+#    - Update workspace_path with your email
+#    - Update permissions with your email
+#    - Optionally change LLM_ENDPOINT
 
 # 3. Deploy to development
 ./deploy.sh create --env development --profile my-profile
@@ -93,30 +91,27 @@ cp config/deployment.example.yaml config/deployment.yaml
 
 ```
 ┌────────────────────────────────────────────────────┐
-│  Frontend (React + TypeScript + Vite)             │
-│  └─ Chat UI with message history                  │
+│  Built-in Chat UI (HTML/CSS/JS)                   │
+│  └─ Simple chat interface with session management │
 └────────────────┬───────────────────────────────────┘
                  │ REST API
 ┌────────────────▼───────────────────────────────────┐
 │  Backend (FastAPI + Python)                        │
 │  ├─ ChatModel: Direct model serving wrapper       │
-│  ├─ SessionManager: Multi-user session management │
-│  └─ ProfileService: Configuration management      │
+│  └─ SessionManager: Multi-user session management │
 └────────────────┬───────────────────────────────────┘
                  │
 ┌────────────────▼───────────────────────────────────┐
 │  Databricks Platform                               │
 │  ├─ Model Serving Endpoint (LLM)                   │
-│  ├─ Lakebase (session/config persistence)        │
-│  └─ MLflow (tracing and observability)            │
+│  └─ Lakebase (session persistence)                │
 └────────────────────────────────────────────────────┘
 ```
 
 **Key Components:**
 - **ChatModel** (`src/services/chat_model.py`): Clean wrapper for model serving - easy to customize
 - **SessionManager** (`src/api/services/session_manager.py`): Database-backed session persistence
-- **ProfileService** (`src/services/profile_service.py`): Hot-reloadable configuration
-- **Settings** (`src/core/settings_db.py`): Database-first configuration (YAML seeds initial state)
+- **Settings** (`src/core/settings.py`): Environment-based configuration
 
 ---
 
@@ -128,13 +123,13 @@ databricks-chat-app/
 │   ├── api/              # FastAPI application
 │   │   ├── routes/       # API endpoints
 │   │   ├── schemas/      # Pydantic models
-│   │   └── services/     # Business logic
+│   │   ├── services/     # Business logic (SessionManager)
+│   │   └── static/       # Built-in chat UI
 │   ├── core/             # Infrastructure (database, settings, clients)
-│   ├── database/models/  # SQLAlchemy ORM models
-│   ├── services/         # Chat model and configuration services
+│   ├── database/models/  # SQLAlchemy ORM models (sessions only)
+│   ├── services/         # Chat model service
 │   └── utils/            # Logging, error handling
-├── frontend/             # React + TypeScript application
-├── config/               # YAML configuration files
+├── config/               # Deployment configuration
 ├── scripts/              # Database initialization scripts
 ├── quickstart/           # Setup automation
 ├── db_app_deployment/    # Databricks deployment CLI
@@ -143,39 +138,69 @@ databricks-chat-app/
 
 ---
 
+## Configuration
+
+### Environment Variables
+
+All configuration is done via environment variables:
+
+```bash
+# Required for local development
+DATABRICKS_HOST=https://your-workspace.cloud.databricks.com
+DATABRICKS_TOKEN=dapi...your-token
+
+# Database (local development)
+DATABASE_URL=postgresql://localhost:5432/chat_template
+
+# LLM Configuration
+LLM_ENDPOINT=databricks-claude-sonnet-4-5    # Model serving endpoint
+LLM_TEMPERATURE=0.7                           # Sampling temperature (0.0-2.0)
+LLM_MAX_TOKENS=2048                           # Maximum response tokens
+
+# Optional
+ENVIRONMENT=development
+LOG_LEVEL=DEBUG
+```
+
+### Deployment Configuration
+
+Edit `config/deployment.yaml` to configure:
+- App name and workspace path
+- Permissions (who can access the app)
+- Environment variables for the deployed app
+- Lakebase database settings
+
+---
+
 ## Customization Guide
 
-### Replace the Chat Logic
+### Change the LLM Endpoint
 
-The template uses a simple pattern that's easy to customize:
+Set the `LLM_ENDPOINT` environment variable in your deployment config:
 
-**1. Update the model serving endpoint:**
-
-Edit `config/seed_profiles.yaml`:
 ```yaml
-ai_infra:
-  llm_endpoint: "your-custom-endpoint-name"
+env_vars:
+  LLM_ENDPOINT: "your-custom-endpoint-name"
 ```
 
-**2. Customize the system prompt:**
+Available Databricks Foundation Model endpoints:
+- `databricks-claude-sonnet-4-5`
+- `databricks-meta-llama-3-1-70b-instruct`
+- `databricks-meta-llama-3-1-405b-instruct`
+- `databricks-dbrx-instruct`
+- `databricks-mixtral-8x7b-instruct`
 
-Edit `config/prompts.yaml`:
-```yaml
-system_prompt: |
-  Your custom prompt here...
-```
+### Customize the System Prompt
 
-**3. Modify the chat model (advanced):**
+Set the `SYSTEM_PROMPT` environment variable, or edit the default in `src/core/settings.py`.
+
+### Modify the Chat Model (Advanced)
 
 Edit `src/services/chat_model.py` to add custom logic:
 - Pre-processing user messages
 - Post-processing model responses
 - Adding RAG integration
 - Implementing function calling
-
-**4. Update the UI:**
-
-Customize `frontend/src/components/` to match your needs.
 
 ### Example: Add RAG
 
@@ -194,56 +219,9 @@ async def generate_with_context(self, messages, documents):
     return await self.generate(messages)
 ```
 
-### Example: Add Function Calling
+### Customize the UI
 
-```python
-# src/services/chat_model.py
-
-async def generate_with_tools(self, messages, available_tools):
-    """Generate response with function calling."""
-    # Your tool-calling logic here
-    pass
-```
-
----
-
-## Configuration
-
-### Environment Variables
-
-```bash
-# Required
-DATABRICKS_HOST=https://your-workspace.cloud.databricks.com
-DATABRICKS_TOKEN=dapi...your-token
-
-# Database (local development)
-DATABASE_URL=postgresql://localhost:5432/chat_template
-
-# Optional
-ENVIRONMENT=development
-LOG_LEVEL=DEBUG
-```
-
-### Database-Backed Settings
-
-All configuration is stored in the database for hot-reload:
-- **Profiles**: Different LLM configurations
-- **AI Infrastructure**: Model endpoints, parameters
-- **MLflow**: Experiment tracking settings
-- **Prompts**: System and user prompt templates
-
-Manage via:
-- UI: Settings page in the app
-- API: `/api/settings/*` endpoints
-- Database: Direct SQL queries
-
-### YAML Configuration
-
-YAML files in `config/` seed the initial database state:
-- `seed_profiles.yaml` - Initial profiles
-- `prompts.yaml` - Default prompts
-- `config.yaml` - Default settings
-- `deployment.yaml` - Deployment configurations
+Edit `src/api/static/index.html` to customize the chat interface. It's a single HTML file with embedded CSS and JavaScript - no build step required.
 
 ---
 
@@ -254,20 +232,26 @@ YAML files in `config/` seed the initial database state:
 source .venv/bin/activate
 uvicorn src.api.main:app --reload --port 8000
 
-# Frontend (from frontend/)
-npm run dev           # Development server
-npm run build         # Production build
-npm run lint          # Lint TypeScript
-
 # Database
-python scripts/init_database.py    # Initialize/seed database
+python scripts/init_database.py    # Initialize database tables
 psql -d chat_template              # Connect to local database
 
 # Tests
 pytest                             # All tests
 pytest tests/unit/                 # Unit tests only
-pytest -m "not integration"        # Skip integration tests
 ```
+
+---
+
+## Multi-User Testing
+
+The built-in UI supports testing multi-user behavior:
+
+1. Open the app in multiple browser tabs
+2. Each tab gets a unique session ID (shown in header)
+3. Use "New Session" to start fresh in any tab
+4. Watch different conversations happen in parallel
+5. Sessions persist in the database
 
 ---
 
@@ -279,8 +263,7 @@ pytest -m "not integration"        # Skip integration tests
 | `Database connection failed` | Run `./quickstart/setup_database.sh` |
 | `Port already in use` | Run `./stop_app.sh` to kill existing processes |
 | Deployment fails | Run with `--dry-run` to validate configuration |
-
-For more help, see [TEMPLATE_GUIDE.md](TEMPLATE_GUIDE.md).
+| Chat hangs | Check LLM_ENDPOINT is valid in your workspace |
 
 ---
 
@@ -288,12 +271,11 @@ For more help, see [TEMPLATE_GUIDE.md](TEMPLATE_GUIDE.md).
 
 **Backend:**
 - Python 3.10+, FastAPI, SQLAlchemy
-- Databricks SDK, MLflow
+- Databricks SDK
 - PostgreSQL (local) / Lakebase (production)
 
 **Frontend:**
-- React 18, TypeScript, Vite
-- Tailwind CSS
+- Built-in HTML/CSS/JS (no build required)
 
 **Infrastructure:**
 - Databricks Apps, Lakebase, Model Serving

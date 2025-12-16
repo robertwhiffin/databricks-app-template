@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Databricks Chat App Template**: A production-ready foundation for building conversational AI applications on Databricks. Features direct model serving integration (no LangChain), multi-user sessions, database-backed configuration, and automated deployment.
+**Databricks Chat App Template**: A production-ready foundation for building conversational AI applications on Databricks. Features direct model serving integration (no LangChain), multi-user sessions, environment-based configuration, and automated deployment.
 
-**Stack**: Python 3.10 (FastAPI, SQLAlchemy), React 18 (TypeScript, Vite, Tailwind), Databricks SDK, PostgreSQL/Lakebase
+**Stack**: Python 3.10 (FastAPI, SQLAlchemy), Databricks SDK, PostgreSQL/Lakebase, Built-in HTML/CSS/JS UI
 
 ## Essential Commands
 
@@ -18,15 +18,12 @@ cp .env.example .env  # Configure DATABRICKS_HOST and DATABRICKS_TOKEN
 ./quickstart/setup.sh
 
 # Start/stop
-./start_app.sh        # Backend: :8000, Frontend: :3000
+./start_app.sh        # Backend: :8000
 ./stop_app.sh
 
 # Manual backend
 source .venv/bin/activate
 uvicorn src.api.main:app --reload --port 8000
-
-# Manual frontend
-cd frontend && npm run dev
 ```
 
 ### Testing
@@ -44,14 +41,11 @@ pytest --cov=src tests/          # With coverage
 ruff check src/ tests/           # Lint
 ruff check --fix src/            # Fix issues
 mypy src/                        # Type check
-cd frontend && npm run lint      # Frontend lint
 ```
 
-### Build & Deploy
+### Deploy
 
 ```bash
-cd frontend && npm run build     # Frontend: frontend/dist/
-
 # Databricks deployment
 cp config/deployment.example.yaml config/deployment.yaml
 ./deploy.sh create --env development --profile my-profile
@@ -63,7 +57,7 @@ cp config/deployment.example.yaml config/deployment.yaml
 
 ```bash
 createdb chat_template           # Create local DB
-python scripts/init_database.py  # Initialize schema and seed profiles
+python scripts/init_database.py  # Initialize schema
 psql -d chat_template -c "\dt"   # Check tables
 ```
 
@@ -72,7 +66,7 @@ psql -d chat_template -c "\dt"   # Check tables
 ### Request Flow
 
 ```
-User Message (Frontend)
+User Message (Built-in Chat UI)
     ↓
 POST /api/chat (routes/chat.py)
     ↓
@@ -84,24 +78,26 @@ ChatModel.generate() (services/chat_model.py)
 SessionManager.add_message() (api/services/session_manager.py)
     - Persists to PostgreSQL/Lakebase
     ↓
-Response → Frontend
+Response → Chat UI
 ```
 
 ### Backend Structure
 
 - **`src/api/`**: FastAPI routes, schemas (Pydantic), services
+- **`src/api/static/`**: Built-in chat UI (single HTML file)
 - **`src/services/chat_model.py`**: Direct model serving wrapper - **THIS IS WHERE YOU CUSTOMIZE CHAT LOGIC**
 - **`src/core/`**: Database abstraction, Databricks client singleton, settings management
-- **`src/database/models/`**: SQLAlchemy ORM (sessions, profiles, config)
+- **`src/core/settings.py`**: Environment-based configuration
+- **`src/database/models/`**: SQLAlchemy ORM (sessions only)
 - **`src/api/services/session_manager.py`**: Multi-user session CRUD with database persistence
 
-### Frontend Structure
+### UI
 
-- **`frontend/src/components/ChatPanel/`**: Chat UI components
-- **`frontend/src/components/config/`**: Profile and settings management UI
-- **`frontend/src/contexts/`**: ProfileContext, SessionContext (React Context API)
-- **`frontend/src/services/api.ts`**: All backend API calls
-- **`frontend/src/types/`**: TypeScript interfaces
+The chat UI is a single HTML file at `src/api/static/index.html`:
+- No build step required
+- Embedded CSS and JavaScript
+- Session management (each browser tab = unique session)
+- "New Session" button to start fresh conversations
 
 ## Critical Patterns
 
@@ -126,19 +122,17 @@ class ChatModel:
 
 **Key point**: Replace this method to add RAG, function calling, or custom logic.
 
-### Database-Backed Configuration
+### Environment-Based Configuration
 
-Settings stored in database, hot-reload without restart:
+Settings loaded from environment variables:
 
 ```python
-# src/core/settings_db.py
-from src.core.settings_db import get_settings
+# src/core/settings.py
+from src.core.settings import get_settings
 
-settings = get_settings()  # Loads from database
-# Changes via UI or API immediately affect next request
+settings = get_settings()  # Loads from environment
+# LLM_ENDPOINT, LLM_TEMPERATURE, LLM_MAX_TOKENS, SYSTEM_PROMPT
 ```
-
-YAML files (`config/*.yaml`) only seed initial state. Database is source of truth.
 
 ### Session Persistence
 
@@ -210,47 +204,39 @@ async def generate(self, messages, ...):
 2. Define Pydantic schemas in `src/api/schemas/`
 3. Add business logic in `src/services/` or `src/api/services/`
 4. Register router in `src/api/main.py`
-5. Add frontend call in `frontend/src/services/api.ts`
-6. Update TypeScript types in `frontend/src/types/`
-
-### Add Configuration Option
-
-1. Add field to database model in `src/database/models/`
-2. Update seed profiles in `config/seed_profiles.yaml`
-3. Update settings service in `src/core/settings_db.py`
-4. Add UI in `frontend/src/components/config/`
-5. Run `python scripts/init_database.py` to update schema
 
 ### Debug Issues
 
-1. **Check MLflow traces**: Agent execution traced to Databricks MLflow
+1. **Check logs**: Backend logs with `LOG_LEVEL=DEBUG`
 2. **Inspect session state**: `SELECT * FROM user_sessions WHERE session_id = '...'`
-3. **Check logs**: `tail -f logs/backend.log`
-4. **Database issues**: `psql -d chat_template` to inspect directly
+3. **Database issues**: `psql -d chat_template` to inspect directly
 
 ## Environment Configuration
 
 ### Required Environment Variables
 
 ```bash
-# .env file
+# .env file (local development)
 DATABRICKS_HOST=https://your-workspace.cloud.databricks.com
 DATABRICKS_TOKEN=dapi...
 DATABASE_URL=postgresql://localhost:5432/chat_template
+
+# LLM settings (optional - have defaults)
+LLM_ENDPOINT=databricks-claude-sonnet-4-5
+LLM_TEMPERATURE=0.7
+LLM_MAX_TOKENS=2048
 ```
 
 ### Databricks Resources
 
 - **Model Serving Endpoint**: Chat model (Foundation Model API or custom)
-- **Lakebase** (production): For session/config persistence in Unity Catalog
-- **MLflow**: For tracing (auto-configured in Databricks)
+- **Lakebase** (production): For session persistence
+- **Databricks Apps**: For hosting the application
 
 ### Configuration Files
 
-- `config/config.yaml`: LLM endpoint defaults (seeds initial profile)
-- `config/prompts.yaml`: System prompts (seeds initial profile)
-- `config/seed_profiles.yaml`: Initial configuration profiles
 - `config/deployment.yaml`: Databricks App deployment settings (dev/staging/prod)
+- `config/deployment.example.yaml`: Template with placeholder values
 
 ## Troubleshooting
 
@@ -267,20 +253,22 @@ Run `./stop_app.sh`
 Run with `--dry-run`: `./deploy.sh create --env dev --profile my-profile --dry-run`
 
 ### Model serving errors
-- Check endpoint name in profile settings
+- Check `LLM_ENDPOINT` in deployment config
 - Verify endpoint is deployed and running in Databricks
 - Check model input format matches your endpoint
 
-### Frontend build fails
-Ensure Node.js 18+ and run `cd frontend && npm install`
+### Chat hangs or times out
+- LLM endpoint may be starting up (cold start)
+- Check the endpoint exists in your workspace
+- Look at app logs for detailed errors
 
 ## Template Customization Guide
 
 This is a **template** - meant to be customized for your use case:
 
 1. **Chat Logic**: Modify `src/services/chat_model.py`
-2. **System Prompts**: Edit `config/prompts.yaml`
-3. **UI**: Customize `frontend/src/components/`
+2. **System Prompt**: Set `SYSTEM_PROMPT` env var or edit default in `src/core/settings.py`
+3. **UI**: Customize `src/api/static/index.html`
 4. **Deployment**: Update `config/deployment.yaml` with your workspace details
 
 The infrastructure (database, sessions, deployment) is production-ready and typically doesn't need changes.
@@ -290,4 +278,3 @@ The infrastructure (database, sessions, deployment) is production-ready and typi
 - Unit tests mock Databricks connections
 - Integration tests require valid `DATABRICKS_HOST` and `DATABRICKS_TOKEN`
 - Use `pytest -m "not integration"` to skip integration tests in CI
-- No live test scripts included (add as needed for your use case)
