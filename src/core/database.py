@@ -11,7 +11,7 @@ from typing import Generator
 from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 logger = logging.getLogger(__name__)
@@ -181,5 +181,26 @@ def get_db_session() -> Generator[Session, None, None]:
 
 
 def init_db():
-    """Create all tables in the database."""
-    Base.metadata.create_all(bind=get_engine())
+    """Create schema (if needed) and all tables in the database.
+    
+    For Lakebase, creates the schema specified by LAKEBASE_SCHEMA env var
+    before creating tables, since SQLAlchemy's create_all() only creates tables.
+    """
+    engine = get_engine()
+    
+    # Check if running on Lakebase and need to create schema
+    pg_host = os.getenv("PGHOST")
+    if pg_host:
+        # Running on Lakebase - ensure schema exists
+        schema = os.getenv("LAKEBASE_SCHEMA", "app_data")
+        logger.info(f"Ensuring Lakebase schema exists: {schema}")
+        
+        with engine.connect() as conn:
+            # Create schema if it doesn't exist
+            conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))
+            conn.commit()
+            logger.info(f"Schema '{schema}' ready")
+    
+    # Create all tables
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables created")

@@ -24,7 +24,7 @@ environments:
       LAKEBASE_SCHEMA: "app_data"
     lakebase:
       database_name: "chat-template-dev-db"
-      schema: "app_chat_template_data"
+      schema: "app_data"  # Must match LAKEBASE_SCHEMA env var
       capacity: "CU_1"  # Options: CU_1, CU_2, CU_4, CU_8
 
   staging:
@@ -43,10 +43,10 @@ environments:
       ENVIRONMENT: "staging"
       LOG_LEVEL: "INFO"
       LAKEBASE_INSTANCE: "chat-template-staging-db"
-      LAKEBASE_SCHEMA: "app_chat_template_data"
+      LAKEBASE_SCHEMA: "app_data"
     lakebase:
       database_name: "chat-template-staging-db"
-      schema: "app_data"
+      schema: "app_data"  # Must match LAKEBASE_SCHEMA env var
       capacity: "CU_1"  # Options: CU_1, CU_2, CU_4, CU_8
 
   production:
@@ -67,7 +67,7 @@ environments:
       LAKEBASE_SCHEMA: "app_data"
     lakebase:
       database_name: "chat-template-db"
-      schema: "app_chat_template_data"
+      schema: "app_data"  # Must match LAKEBASE_SCHEMA env var
       capacity: "CU_1"  # Options: CU_1, CU_2, CU_4, CU_8
 
 # Common settings across all environments
