@@ -13,6 +13,17 @@ from src.api.routes.settings import (
     prompts_router,
 )
 from src.core.database import init_db
+# Import models to register them with SQLAlchemy Base before init_db() is called
+from src.database.models import (  # noqa: F401
+    ChatRequest,
+    ConfigAIInfra,
+    ConfigHistory,
+    ConfigMLflow,
+    ConfigProfile,
+    ConfigPrompts,
+    SessionMessage,
+    UserSession,
+)
 from src.utils.logging_config import setup_logging
 
 # Setup logging

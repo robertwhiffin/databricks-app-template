@@ -11,10 +11,10 @@ environments:
     app_name: "chat-template-dev"
     description: "Databricks Chat Template - Development Environment"
     # TODO: Replace YOUR_USERNAME with your Databricks username
-    workspace_path: "/Workspace/Users/YOUR_EMAIL@example.com/.apps/dev/chat-template"
+    workspace_path: "/Workspace/Users/robert.whiffin@databricks.com/.apps/dev/chat-template"
     permissions:
       # TODO: Replace with your Databricks user email
-      - user_name: "YOUR_EMAIL@example.com"
+      - user_name: "robert.whiffin@databricks.com"
         permission_level: "CAN_MANAGE"
     compute_size: "MEDIUM"  # Options: MEDIUM, LARGE
     env_vars:
